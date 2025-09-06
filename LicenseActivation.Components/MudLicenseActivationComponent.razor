@@ -148,19 +148,19 @@
                 
                 <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4">
                     <MudText Typo="Typo.body2">
-                        <strong>@requiredEula.Name (v@requiredEula.Version)</strong><br/>
+                        <strong>@requiredEula?.Name (v@requiredEula.Version)</strong><br/>
                         Please review the terms and conditions below.
                     </MudText>
                 </MudAlert>
                 
                 <MudPaper Elevation="1" Class="pa-4 mb-4" Style="max-height: 300px; overflow-y: auto; background-color: #fafafa;">
-                    @if (requiredEula.IsHtmlContent)
+                    @if (requiredEula is { IsHtmlContent: true })
                     {
                         @((MarkupString)requiredEula.Content)
                     }
                     else
                     {
-                        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">@requiredEula.Content</pre>
+                        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">@requiredEula?.Content</pre>
                     }
                 </MudPaper>
                 
@@ -187,7 +187,7 @@
                     }
                     <MudItem xs="12">
                         <MudCheckBox @bind-Value="eulaAcceptance.IsAccepted"
-                                    Label="@($"I have read, understood, and agree to be bound by the terms of this End User License Agreement ({requiredEula.Name} v{requiredEula.Version})")"
+                                    Label="@($"I have read, understood, and agree to be bound by the terms of this End User License Agreement ({requiredEula?.Name} v{requiredEula?.Version})")"
                                     Required="true"
                                     Color="Color.Primary" />
                     </MudItem>

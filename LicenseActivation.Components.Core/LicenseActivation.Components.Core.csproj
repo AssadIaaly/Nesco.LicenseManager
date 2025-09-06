@@ -5,11 +5,14 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageId>Nesco.LicenseActivation.blazor.Core</PackageId>
+        <PackageId>Nesco.LicenseActivation.Components.Core</PackageId>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RepositoryUrl>https://github.com/AssadIaaly/Nesco.LicenseManager/tree/master/LicenseActivation.Components.Core</RepositoryUrl>
+        <Version>1.0.2</Version>
+        <Authors>Assad Iaaly</Authors>
     </PropertyGroup>
 
     <ItemGroup>
