@@ -1,0 +1,79 @@
+@page "/license-activation"
+@using LicenseActivation.Components.Core.Models
+@using LicenseActivation.Components.Services
+@using Microsoft.Extensions.Options
+@inject IBrowserFingerprintService FingerprintService
+@inject ISnackbar? Snackbar
+@inject IOptions<LicenseActivationSettings>? Settings
+
+<PageTitle>License Activation</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Token-Based License Activation</MudText>
+    
+    <MudLicenseActivationComponent 
+        ProductCode="@ProductCode"
+        AcceptedByEmail="@AcceptedByEmail"
+        AcceptedByName="@AcceptedByName"
+        ApiBaseUrl="@GetApiBaseUrl()"
+        MachineFingerprint="@MachineFingerprint"
+        OnActivationSuccess="OnTokenActivationSuccess"
+        OnActivationError="OnTokenActivationError" />
+</MudContainer>
+
+@code {
+    
+    /// <summary>
+    /// The product code to validate against the token
+    /// </summary>
+    [Parameter] public string? ProductCode { get; set; }
+    
+    /// <summary>
+    /// API base URL for license activation
+    /// </summary>
+    [Parameter] public string ApiBaseUrl { get; set; } = "";
+    
+    [Parameter] public string? AcceptedByName { get; set; }
+    [Parameter] public string? AcceptedByEmail { get; set; }
+    [Parameter] public string? MachineFingerprint { get; set; }
+
+    private string GetApiBaseUrl()
+    {
+        // Use parameter first, then settings, then default
+        if (!string.IsNullOrEmpty(ApiBaseUrl))
+            return ApiBaseUrl;
+            
+        if (Settings?.Value != null && !string.IsNullOrEmpty(Settings.Value.ApiBaseUrl))
+            return Settings.Value.ApiBaseUrl;
+            
+        return "https://localhost:7135";
+    }
+
+    private Task OnTokenActivationSuccess(TokenActivationResponse result)
+    {
+        Snackbar?.Add($"License activated successfully! Activation ID: {result.ActivationId}", Severity.Success);
+        
+        // You can add custom logic here, such as:
+        // - Redirecting to another page
+        // - Storing the activation result
+        // - Updating application state
+        // - Processing license parameters
+        
+        if (!string.IsNullOrEmpty(result.Params))
+        {
+            // Handle license parameters
+            Console.WriteLine($"License parameters: {result.Params}");
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private Task OnTokenActivationError(string error)
+    {
+        Snackbar?.Add($"Token activation failed: {error}", Severity.Error);
+        
+        // You can add custom error handling here
+        
+        return Task.CompletedTask;
+    }
+}

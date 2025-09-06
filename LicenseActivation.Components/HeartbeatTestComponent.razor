@@ -1,0 +1,438 @@
+@using LicenseActivation.Components.Core.Models
+@using LicenseActivation.Components.Services
+@using System.Text.Json
+@using MudBlazor
+@inject ILicenseActivationService LicenseService
+@inject IBrowserFingerprintService FingerprintService
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2" />
+        License Heartbeat Test
+    </MudText>
+    
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudTextField @bind-Value="activationId" 
+                                  Label="Activation ID" 
+                                  Variant="Variant.Outlined"
+                                  Placeholder="Enter activation ID"
+                                  HelperText="GUID format activation identifier"
+                                  Required="true" />
+                </MudItem>
+                
+                <MudItem xs="12" md="4">
+                    <MudTextField @bind-Value="customerEmail" 
+                                  Label="Customer Email" 
+                                  Variant="Variant.Outlined"
+                                  Placeholder="Enter customer email"
+                                  InputType="InputType.Email"
+                                  HelperText="Optional: For security validation" />
+                </MudItem>
+                
+                <MudItem xs="12" md="4">
+                    <MudTextField @bind-Value="machineFingerprint" 
+                                  Label="Machine Fingerprint" 
+                                  Variant="Variant.Outlined"
+                                  Placeholder="Enter machine fingerprint"
+                                  HelperText="leave empty to auto-generate"
+                                  />
+                </MudItem>
+                
+                
+                <MudItem xs="12">
+                    <MudButtonGroup Variant="Variant.Filled" Size="Size.Medium">
+                        <MudButton Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Favorite"
+                                   OnClick="TestHeartbeat" 
+                                   Disabled="@(isLoading || string.IsNullOrWhiteSpace(activationId))">
+                            @if (isLoading)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                <span>Testing...</span>
+                            }
+                            else
+                            {
+                                <span>Test Heartbeat</span>
+                            }
+                        </MudButton>
+                        
+                        <MudButton Color="Color.Error" 
+                                   StartIcon="@Icons.Material.Filled.Clear"
+                                   OnClick="ClearResults" 
+                                   Disabled="@isLoading">
+                            Clear Results
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+    
+    @if (!string.IsNullOrEmpty(lastResult))
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="mr-2" />
+                        Test Results
+                    </MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" 
+                                   Color="Color.Primary" 
+                                   OnClick="CopyResults"
+                                   Variant="Variant.Filled"
+                                   Size="Size.Small" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField Value="@lastResult" 
+                              Lines="15" 
+                              Variant="Variant.Outlined" 
+                              ReadOnly="true"
+                              Style="font-family: 'Courier New', monospace; font-size: 12px;" />
+            </MudCardContent>
+        </MudCard>
+    }
+    
+    @if (lastResponse != null)
+    {
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.QueryStats" Class="mr-2" />
+                        Heartbeat Response Details
+                    </MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1"><strong>Overall Valid:</strong></MudText>
+                                    <MudChip T="string" Color="@(lastResponse.IsValid ? Color.Success : Color.Error)" Size="Size.Small">
+                                        @(lastResponse.IsValid ? "Valid" : "Invalid")
+                                    </MudChip>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1"><strong>Active Activation:</strong></MudText>
+                                    <MudChip T="string" Color="@(lastResponse.IsActiveActivation ? Color.Success : Color.Error)" Size="Size.Small">
+                                        @(lastResponse.IsActiveActivation ? "Active" : "Inactive")
+                                    </MudChip>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1"><strong>Valid License:</strong></MudText>
+                                    <MudChip T="string" Color="@(lastResponse.IsValidLicense ? Color.Success : Color.Error)" Size="Size.Small">
+                                        @(lastResponse.IsValidLicense ? "Valid" : "Invalid")
+                                    </MudChip>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1"><strong>Product:</strong></MudText>
+                                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@(lastResponse.ProductName ?? "N/A")</MudText>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1"><strong>Licensed To:</strong></MudText>
+                                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@(lastResponse.LicensedTo ?? "N/A")</MudText>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1"><strong>Expiry Date:</strong></MudText>
+                                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@(lastResponse.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "No expiry")</MudText>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    @if (!string.IsNullOrEmpty(lastResponse.Params))
+                    {
+                        <MudItem xs="12">
+                            <MudCard Elevation="1">
+                                <MudCardHeader>
+                                    <CardHeaderContent>
+                                        <MudText Typo="Typo.subtitle1"><strong>Parameters:</strong></MudText>
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudTextField Value="@lastResponse.Params" 
+                                                  Lines="5" 
+                                                  Variant="Variant.Outlined" 
+                                                  ReadOnly="true"
+                                                  Style="font-family: 'Courier New', monospace; font-size: 11px;" />
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    }
+</MudContainer>
+
+
+@code {
+    private string activationId = "";
+    private string customerEmail = "";
+    private string machineFingerprint = "";
+    private bool isLoading = false;
+    private string lastResult = "";
+    private HeartbeatResponse? lastResponse = null;
+
+    private async Task TestHeartbeat()
+    {
+        if (string.IsNullOrWhiteSpace(activationId))
+            return;
+
+        isLoading = true;
+        lastResult = "";
+        lastResponse = null;
+
+        try
+        {
+            // Parse activation ID
+            if (!Guid.TryParse(activationId.Trim(), out var parsedActivationId))
+            {
+                lastResult = "❌ Error: Invalid activation ID format. Must be a valid GUID.";
+                return;
+            }
+
+            // Use provided values or defaults
+            var testCustomerEmail = string.IsNullOrWhiteSpace(customerEmail) ? "test@example.com" : customerEmail.Trim();
+            
+            // Create heartbeat request
+            var heartbeatRequest = new HeartbeatRequest(parsedActivationId, testCustomerEmail, machineFingerprint);
+
+            lastResult += $"🔄 Sending heartbeat request...\n\n" +
+                         $"📍 Activation ID: {parsedActivationId}\n" +
+                         $"👤 Customer Email: {testCustomerEmail}\n" +
+                         $"🖥️ Machine Fingerprint: {(string.IsNullOrWhiteSpace(machineFingerprint) ? "auto generated" : machineFingerprint)}\n" +
+                         $"🔐 Security Token: {heartbeatRequest.Token}\n\n";
+
+            StateHasChanged();
+
+            // Send heartbeat
+            var response = await LicenseService.SendHeartbeatAsync(heartbeatRequest);
+
+            if (response != null)
+            {
+                lastResponse = response;
+                lastResult += $"✅ Heartbeat Response Received:\n\n" +
+                             $"🔍 Overall Valid: {(response.IsValid ? "✅ YES" : "❌ NO")}\n" +
+                             $"🎯 Active Activation: {(response.IsActiveActivation ? "✅ YES" : "❌ NO")}\n" +
+                             $"📄 Valid License: {(response.IsValidLicense ? "✅ YES" : "❌ NO")}\n" +
+                             $"📦 Product: {response.ProductName ?? "N/A"}\n" +
+                             $"👤 Licensed To: {response.LicensedTo ?? "N/A"}\n" +
+                             $"⏰ Expiry Type: {response.ExpiryType ?? "N/A"}\n" +
+                             $"📅 Expiry Date: {(response.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "No expiry")}\n" +
+                             $"📊 Has Parameters: {(!string.IsNullOrEmpty(response.Params) ? "Yes" : "No")}\n" +
+                             $"🕒 Last Heartbeat: {response.LastHeartbeat.ToString("yyyy-MM-dd HH:mm:ss") ?? "Never"}\n\n" +
+                             $"💡 Status: {(response.IsValid ? "License is active and valid" : "License validation failed")}\n";
+
+                if (!string.IsNullOrEmpty(response.Params))
+                {
+                    try
+                    {
+                        var formatted = JsonSerializer.Serialize(JsonSerializer.Deserialize<object>(response.Params), new JsonSerializerOptions { WriteIndented = true });
+                        lastResult += $"\n📋 Parameters (formatted):\n{formatted}";
+                    }
+                    catch
+                    {
+                        lastResult += $"\n📋 Parameters (raw):\n{response.Params}";
+                    }
+                }
+            }
+            else
+            {
+                lastResult += "❌ No response received from server. Check network connectivity and API configuration.";
+            }
+        }
+        catch (HttpRequestException httpEx)
+        {
+            // Handle HTTP errors including 401 Unauthorized
+            lastResult += $"🚫 HTTP Error:\n";
+            
+            // Parse the error message format: "StatusCode|ErrorMessage"
+            string errorMessage = httpEx.Message;
+            string statusCode = "";
+            string apiError = "";
+            
+            if (errorMessage.Contains("|"))
+            {
+                var parts = errorMessage.Split('|', 2);
+                statusCode = parts[0];
+                apiError = parts.Length > 1 ? parts[1] : "";
+            }
+            
+            if (statusCode == "401" || errorMessage.Contains("401"))
+            {
+                lastResult += "❌ Unauthorized (401) - Security validation failed\n\n";
+                
+                // Show the actual API error message
+                if (!string.IsNullOrEmpty(apiError))
+                {
+                    lastResult += $"🔒 Server response: {apiError}\n\n";
+                }
+                
+                lastResult += "📝 Details:\n";
+                
+                // Provide specific guidance based on the error
+                if (apiError.Contains("The license does not belong to this customer"))
+                {
+                    lastResult += "• Customer email mismatch detected\n";
+                    lastResult += $"  You provided: '{(string.IsNullOrWhiteSpace(customerEmail) ? "test@example.com (default)" : customerEmail.Trim())}'\n";
+                    lastResult += "  ✅ Solution: Use the correct customer email associated with this license\n";
+                    lastResult += "  ℹ️ Note: The license has CheckCustomer security enabled\n";
+                }
+                else if (apiError.Contains("The license does not belong to this machine"))
+                {
+                    lastResult += "• Machine fingerprint mismatch detected\n";
+                    lastResult += $"  You provided: '{(string.IsNullOrWhiteSpace(machineFingerprint) ? "[Auto-generated]" : machineFingerprint.Trim())}'\n";
+                    lastResult += "  ✅ Solution: Use the same fingerprint that was used during activation\n";
+                    lastResult += "  ℹ️ Note: The license has CheckFingerprint security enabled\n";
+                }
+                else
+                {
+                    lastResult += "• Security validation failed\n";
+                    lastResult += "  ✅ Check both customer email and machine fingerprint\n";
+                }
+            }
+            else if (statusCode == "404" || errorMessage.Contains("404"))
+            {
+                lastResult += "❌ Not Found (404)\n\n";
+                
+                if (!string.IsNullOrEmpty(apiError))
+                {
+                    lastResult += $"📝 Server response: {apiError}\n\n";
+                }
+                
+                if (apiError.Contains("Activation not found"))
+                {
+                    lastResult += "• The activation ID does not exist\n";
+                    lastResult += $"  Provided ID: {activationId.Trim()}\n";
+                    lastResult += "  ✅ Solution: Verify the activation ID is correct\n";
+                }
+                else if (apiError.Contains("License not found"))
+                {
+                    lastResult += "• No license found for this activation\n";
+                    lastResult += "  ✅ Solution: Check if the license still exists in the system\n";
+                }
+                else
+                {
+                    lastResult += "• Resource not found\n";
+                    lastResult += $"  Activation ID: {activationId.Trim()}\n";
+                }
+            }
+            else if (statusCode == "400" || errorMessage.Contains("400"))
+            {
+                lastResult += "❌ Bad Request (400)\n\n";
+                
+                if (!string.IsNullOrEmpty(apiError))
+                {
+                    lastResult += $"⚠️ Server response: {apiError}\n\n";
+                }
+                
+                if (apiError.Contains("Token is required"))
+                {
+                    lastResult += "• Security token was not sent\n";
+                    lastResult += "  ✅ Solution: This is an internal error, please report it\n";
+                }
+                else if (apiError.Contains("Invalid token format"))
+                {
+                    lastResult += "• The security token format is invalid\n";
+                    lastResult += "  ✅ Solution: Check that all required fields are provided\n";
+                }
+                else
+                {
+                    lastResult += "• Request validation failed\n";
+                }
+            }
+            else
+            {
+                lastResult += $"{errorMessage}\n";
+            }
+            
+            if (httpEx.InnerException != null)
+            {
+                lastResult += $"\n\n🔍 Inner Exception:\n{httpEx.InnerException.GetType().Name}: {httpEx.InnerException.Message}";
+            }
+        }
+        catch (Exception ex)
+        {
+            lastResult += $"💥 Exception occurred:\n{ex.GetType().Name}: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                lastResult += $"\n\n🔍 Inner Exception:\n{ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
+            }
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ClearResults()
+    {
+        lastResult = "";
+        lastResponse = null;
+        Snackbar.Add("Results cleared", Severity.Normal);
+    }
+
+    private async Task CopyResults()
+    {
+        if (!string.IsNullOrEmpty(lastResult))
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", lastResult);
+                Snackbar.Add("Results copied to clipboard", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to copy to clipboard: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}
