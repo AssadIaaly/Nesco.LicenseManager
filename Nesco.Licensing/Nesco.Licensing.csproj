@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Nesco.Licensing</AssemblyName>
+        <PackageId>Nesco.Licensing</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Nesco</Authors>
+        <Description>A Blazor component library for license activation with advanced browser fingerprinting and duplicate detection.</Description>
+        <PackageTags>blazor;license;activation;fingerprinting;component</PackageTags>
+        <PackageProjectUrl>https://github.com/AssadIaaly/Nesco.LicenseManager/tree/master/Nesco.Licensing</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/AssadIaaly/Nesco.LicenseManager/tree/master/Nesco.Licensing</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.5"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0"/>
+        <PackageReference Include="MudBlazor" Version="8.0.0"/>
+        <PackageReference Include="Nesco.Licensing.Core" Version="1.0.0" />
+    </ItemGroup>
+
+</Project>
