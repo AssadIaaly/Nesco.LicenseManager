@@ -1,0 +1,139 @@
+@page "/basic-license-activation"
+@using Microsoft.Extensions.Options
+@using Nesco.Licensing.Core.Models
+@inject IOptions<LicenseActivationSettings>? Settings
+
+<PageTitle>License Activation</PageTitle>
+
+<div class="basic-page-container">
+    <div class="page-header">
+        <h1>Token License Activation</h1>
+        <p>Activate your software license using a secure license token.</p>
+    </div>
+    
+    <HtmlLicenseActivationComponent 
+        ProductCode="@ProductCode"
+        ApiBaseUrl="@GetApiBaseUrl()"
+        AcceptedByEmail="@AcceptedByEmail"
+        AcceptedByName="@AcceptedByName"
+        MachineFingerprint="@MachineFingerprint"
+        OnActivationSuccess="OnTokenActivationSuccess"
+        OnActivationError="OnTokenActivationError" />
+</div>
+
+<style>
+    .basic-page-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100vh;
+        background: #f5f5f5;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 40px 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-header h1 {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-size: 2.5em;
+        font-weight: 300;
+    }
+
+    .page-header p {
+        margin: 0;
+        color: #666;
+        font-size: 1.1em;
+    }
+
+    @@media (max-width: 768px) {
+    .basic-page-container {
+        padding: 10px;
+    }
+
+    .page-header {
+        padding: 20px 10px;
+    }
+
+    .page-header h1 {
+        font-size: 2em;
+    }
+    }
+</style>
+
+@code {
+    /// <summary>
+    /// The API base URL for license activation
+    /// </summary>
+    [Parameter] public string ApiBaseUrl { get; set; } = "";
+    
+    /// <summary>
+    /// The product code to validate against the token
+    /// </summary>
+    [Parameter] public string? ProductCode { get; set; }
+    
+    [Parameter] public string? AcceptedByName { get; set; }
+    [Parameter] public string? AcceptedByEmail { get; set; }
+    [Parameter] public string? MachineFingerprint { get; set; }
+    
+    
+    private string GetApiBaseUrl()
+    {
+        // Use parameter first, then settings, then default
+        if (!string.IsNullOrEmpty(ApiBaseUrl))
+            return ApiBaseUrl;
+            
+        if (Settings?.Value != null && !string.IsNullOrEmpty(Settings.Value.ApiBaseUrl))
+            return Settings.Value.ApiBaseUrl;
+            
+        return "https://localhost:7135";
+    }
+
+    private Task OnTokenActivationSuccess(TokenActivationResponse result)
+    {
+        // You can add custom logic here, such as:
+        // - Redirecting to another page
+        // - Storing the activation result
+        // - Updating application state
+        // - Showing success notifications
+        
+        Console.WriteLine($"Token activation succeeded: {result.ActivationId}");
+        
+        // Parse and handle product-specific parameters
+        if (!string.IsNullOrEmpty(result.Params))
+        {
+            try
+            {
+                var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(result.Params)!;
+                Console.WriteLine($"License parameters: {string.Join(", ", parameters.Keys)}");
+                
+                // Use parameters to configure features, limits, etc.
+                // Example: Enable/disable features based on license params
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error parsing license parameters: {ex.Message}");
+            }
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private Task OnTokenActivationError(string error)
+    {
+        Console.WriteLine($"Token activation failed: {error}");
+        
+        // You can add custom error handling here
+        // - Show user-friendly error messages
+        // - Log errors to your system
+        // - Provide help or support links
+        
+        return Task.CompletedTask;
+    }
+}

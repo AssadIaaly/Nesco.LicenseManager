@@ -4,52 +4,30 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <EnableDefaultCssItems>true</EnableDefaultCssItems>
-    <ScopedCssEnabled>true</ScopedCssEnabled>
     <RootNamespace>LicenseActivation.Components</RootNamespace>
     <AssemblyName>LicenseActivation.Components</AssemblyName>
     
     <!-- NuGet Package Configuration -->
-    <PackageId>Nesco.LicenseActivation.Components  </PackageId>
-    <Version>1.0.2</Version>
-    <Authors>Assad Iaaly</Authors>
+    <PackageId>LicenseActivation.Components</PackageId>
+    <Version>1.0.3</Version>
+    <Authors>Nesco</Authors>
     <Description>A Blazor component library for license activation with advanced browser fingerprinting and duplicate detection.</Description>
     <PackageTags>blazor;license;activation;fingerprinting;component</PackageTags>
-    <PackageProjectUrl></PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/AssadIaaly/Nesco.LicenseManager/tree/master/LicenseActivation.Components</PackageProjectUrl>
     <RepositoryUrl>https://github.com/AssadIaaly/Nesco.LicenseManager/tree/master/LicenseActivation.Components</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
       <PackageReadmeFile>README.md</PackageReadmeFile>
-  </PropertyGroup>
-   
+    </PropertyGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
   <ItemGroup>
-    <SupportedPlatform Include="browser" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <PackageReference Include="MudBlazor" Version="8.0.0" />
-    <PackageReference Include="Nesco.LicenseActivation.blazor.Core" Version="1.0.0" />
     <PackageReference Include="Nesco.LicenseActivation.Components.Core" Version="1.0.2" />
   </ItemGroup>
-
-  <ItemGroup>
-      <None Include="README.md" Pack="true" PackagePath="\"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="wwwroot\js\licenseActivation.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <!-- Static web assets are automatically included by the SDK for Razor class libraries -->
 
 </Project>

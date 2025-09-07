@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LicenseActivation.Component
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LicenseActivation.Components.Core", "LicenseActivation.Components.Core\LicenseActivation.Components.Core.csproj", "{BD668BED-853F-43FD-B9C8-29D19FB24264}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.Licensing.Core", "Nesco.Licensing.Core\Nesco.Licensing.Core.csproj", "{548F3B2C-3311-4A00-A9D4-44518BDF4F5E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.Licensing", "Nesco.Licensing\Nesco.Licensing.csproj", "{64C9B565-6788-4859-9731-8456CD461F87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,13 @@ Global
 		{BD668BED-853F-43FD-B9C8-29D19FB24264}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD668BED-853F-43FD-B9C8-29D19FB24264}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD668BED-853F-43FD-B9C8-29D19FB24264}.Release|Any CPU.Build.0 = Release|Any CPU
+		{548F3B2C-3311-4A00-A9D4-44518BDF4F5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{548F3B2C-3311-4A00-A9D4-44518BDF4F5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{548F3B2C-3311-4A00-A9D4-44518BDF4F5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{548F3B2C-3311-4A00-A9D4-44518BDF4F5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64C9B565-6788-4859-9731-8456CD461F87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64C9B565-6788-4859-9731-8456CD461F87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64C9B565-6788-4859-9731-8456CD461F87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64C9B565-6788-4859-9731-8456CD461F87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
