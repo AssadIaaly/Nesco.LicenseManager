@@ -1,6 +1,6 @@
 # 🔐 LicenseActivation.Components
 
-[![NuGet Version](https://img.shields.io/nuget/v/Nesco.LicenseActivation.Blazor)](https://www.nuget.org/packages/Nesco.LicenseActivation.Components/)
+[![NuGet Version](https://img.shields.io/nuget/v/Nesco.LicenseActivation.Blazor)](https://www.nuget.org/packages/Nesco.Licensing/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com)
 [![Blazor](https://img.shields.io/badge/Blazor-WebAssembly%20%7C%20Server-512BD4)](https://blazor.net)
@@ -19,7 +19,7 @@ Blazor component library for license activation with browser fingerprinting, EUL
 ## Installation
 
 ```bash
-dotnet add package Nesco.LicenseActivation.Blazor
+dotnet add package Nesco.Licensing
 ```
 
 ## Setup
@@ -34,7 +34,7 @@ using MudBlazor.Services; // Only if using MudLicenseActivationComponent
 builder.Services.AddMudServices();
 
 // Add License Activation services
-builder.Services.AddLicenseActivationComponent(options =>
+builder.Services.AddNescoLicensing(options =>
 {
     options.ApiBaseUrl = "https://your-api-url.com";
     options.PublicKey = "your-rsa-public-key"; // Optional for signature validation
@@ -45,7 +45,7 @@ builder.Services.AddLicenseActivationComponent(options =>
 
 ```html
 <!-- Add machine fingerprinting script -->
-<script src="_content/LicenseActivation.Components/js/licenseActivation.js"></script>
+<script src="_content/LicenseActivation.Components/js/lic.min.js"></script>
 ```
 
 ## Component Usage
