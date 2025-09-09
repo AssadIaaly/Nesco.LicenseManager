@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>Nesco.Licensing</AssemblyName>
         <PackageId>Nesco.Licensing</PackageId>
-        <Version>1.0.0</Version>
+        <Version>1.0.1</Version>
         <Authors>Nesco</Authors>
         <Description>A Blazor component library for license activation with advanced browser fingerprinting and duplicate detection.</Description>
         <PackageTags>blazor;license;activation;fingerprinting;component</PackageTags>
@@ -25,6 +25,10 @@
         <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0"/>
         <PackageReference Include="MudBlazor" Version="8.0.0"/>
         <PackageReference Include="Nesco.Licensing.Core" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Helpers\" />
     </ItemGroup>
 
 </Project>

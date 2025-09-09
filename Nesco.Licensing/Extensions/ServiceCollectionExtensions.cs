@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Nesco.Licensing.Core.Models;
 using Nesco.Licensing.Core.Services;
+using Nesco.Licensing.Helpers;
 using Nesco.Licensing.Services;
 
 namespace Nesco.Licensing.Extensions;
@@ -45,6 +46,9 @@ public static class ServiceCollectionExtensions
         {
             services.AddScoped<IClientTokenService, ClientTokenService>();
         }
+        
+        // Register LicenseHelper for DI usage
+        services.AddScoped<LicenseHelper>();
         
         return services;
     }

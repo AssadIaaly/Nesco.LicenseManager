@@ -111,14 +111,304 @@ This component provides a complete testing interface for heartbeat functionality
 
 ## Component Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `ProductCode` | `string` | **Required**. Product code for license validation |
-| `AcceptedByName` | `string?` | Pre-fill name for EULA acceptance |
-| `AcceptedByEmail` | `string?` | Pre-fill email for EULA acceptance |
-| `MachineFingerprint` | `string?` | Override machine fingerprint. When provided, disables manual input and skips auto-generation |
-| `OnActivationSuccess` | `EventCallback<TokenActivationResponse>` | Success callback |
-| `OnActivationError` | `EventCallback<string>` | Error callback |
+| Parameter             | Type                                     | Description                                                                                  |
+|-----------------------|------------------------------------------|----------------------------------------------------------------------------------------------|
+| `ProductCode`         | `string`                                 | **Required**. Product code for license validation                                            |
+| `AcceptedByName`      | `string?`                                | Pre-fill name for EULA acceptance                                                            |
+| `AcceptedByEmail`     | `string?`                                | Pre-fill email for EULA acceptance                                                           |
+| `MachineFingerprint`  | `string?`                                | Override machine fingerprint. When provided, disables manual input and skips auto-generation |
+| `OnActivationSuccess` | `EventCallback<TokenActivationResponse>` | Success callback                                                                             |
+| `OnActivationError`   | `EventCallback<string>`                  | Error callback                                                                               |
+
+## Helper Methods (Nesco.Licensing.Helpers)
+
+The library includes a `LicenseHelper` class for programmatic license activation and heartbeat operations. It can be used with dependency injection or as a standalone instance.
+
+### Using with Dependency Injection
+
+When using `AddNescoLicensing()`, the `LicenseHelper` is automatically registered in the DI container:
+
+```csharp
+@inject LicenseHelper LicenseHelper
+
+// Or in a service/controller:
+public class MyService
+{
+    private readonly LicenseHelper _licenseHelper;
+    
+    public MyService(LicenseHelper licenseHelper)
+    {
+        _licenseHelper = licenseHelper;
+    }
+}
+```
+
+### Using as Standalone (without DI)
+
+Create a standalone instance for console apps or scenarios without DI:
+
+```csharp
+// Create standalone helper
+var licenseHelper = LicenseHelper.CreateStandalone(
+    apiBaseUrl: "https://your-api-url.com",
+    publicKey: "your-rsa-public-key" // Optional
+);
+```
+
+### ActivateLicenseAsync
+
+Activates a license with full validation and EULA support:
+
+```csharp
+using Nesco.Licensing.Helpers;
+using Nesco.Licensing.Core.Models;
+
+// Basic activation (auto-generates machine fingerprint)
+var result = await licenseHelper.ActivateLicenseAsync(
+    licenseToken: "your-license-token",
+    productCode: "YOUR_PRODUCT_CODE"
+);
+
+if (result.Success)
+{
+    Console.WriteLine($"License activated! Activation ID: {result.ActivationId}");
+}
+else if (result.RequiresEula)
+{
+    // EULA acceptance is required
+    Console.WriteLine($"EULA required: {result.RequiredEula?.Name}");
+    
+    // Retry with EULA acceptance
+    var eulaAcceptance = new EulaAcceptanceInfo
+    {
+        EulaId = result.RequiredEula.Id,
+        AcceptedByName = "John Doe",
+        AcceptedByEmail = "john@example.com",
+        IsAccepted = true
+    };
+    
+    result = await licenseHelper.ActivateLicenseAsync(
+        licenseToken: "your-license-token",
+        productCode: "YOUR_PRODUCT_CODE",
+        eulaAcceptance: eulaAcceptance
+    );
+}
+else
+{
+    Console.WriteLine($"Activation failed: {result.Error}");
+}
+
+// With custom machine fingerprint
+var result = await licenseHelper.ActivateLicenseAsync(
+    licenseToken: "your-license-token",
+    productCode: "YOUR_PRODUCT_CODE",
+    machineFingerprint: "custom-machine-id"
+);
+```
+
+### SendHeartbeatAsync
+
+Sends a heartbeat to verify license validity:
+
+```csharp
+using Nesco.Licensing.Helpers;
+
+// Send heartbeat (auto-generates machine fingerprint)
+var heartbeatResult = await licenseHelper.SendHeartbeatAsync(
+    activationId: myActivationId,
+    customerEmail: "customer@example.com" // Optional
+);
+
+if (heartbeatResult.Success)
+{
+    var response = heartbeatResult.Response;
+    Console.WriteLine($"License valid: {response.IsValid}");
+    Console.WriteLine($"Product: {response.ProductName}");
+    Console.WriteLine($"Expires: {response.ExpiryDate}");
+}
+else
+{
+    Console.WriteLine($"Heartbeat failed: {heartbeatResult.Error}");
+    Console.WriteLine($"Error code: {heartbeatResult.ErrorCode}");
+}
+
+// With custom machine fingerprint
+var heartbeatResult = await licenseHelper.SendHeartbeatAsync(
+    activationId: myActivationId,
+    customerEmail: "customer@example.com",
+    machineFingerprint: "custom-machine-id"
+);
+```
+
+### Result Objects
+
+#### ActivateLicenseResult
+```csharp
+public class ActivateLicenseResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public Guid? ActivationId { get; set; }
+    public ClientLicenseTokenData? TokenInfo { get; set; }
+    public TokenActivationResponse? ActivationResponse { get; set; }
+    public bool RequiresEula { get; set; }
+    public EulaInfo? RequiredEula { get; set; }
+    public string? MachineFingerprint { get; set; }
+}
+```
+
+#### HeartbeatResult
+```csharp
+public class HeartbeatResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public string? ErrorCode { get; set; } // CUSTOMER_MISMATCH, MACHINE_MISMATCH, etc.
+    public string? ErrorDetails { get; set; }
+    public Guid ActivationId { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string? MachineFingerprint { get; set; }
+    public string? SecurityToken { get; set; }
+    public HeartbeatResponse? Response { get; set; }
+}
+```
+
+### Complete Example: Background Service with Helpers
+
+```csharp
+public class LicenseManagementService : BackgroundService
+{
+    private readonly LicenseHelper _licenseHelper;
+    private readonly IConfiguration _configuration;
+    private Guid? _activationId;
+
+    public LicenseManagementService(
+        LicenseHelper licenseHelper,
+        IConfiguration configuration)
+    {
+        _licenseHelper = licenseHelper;
+        _configuration = configuration;
+    }
+
+    public async Task<bool> ActivateLicenseAsync(string token)
+    {
+        var result = await _licenseHelper.ActivateLicenseAsync(
+            licenseToken: token,
+            productCode: _configuration["License:ProductCode"]
+        );
+
+        if (result.Success)
+        {
+            _activationId = result.ActivationId;
+            // Store activation ID for heartbeats
+            await SaveActivationIdAsync(result.ActivationId);
+            return true;
+        }
+
+        return false;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            if (_activationId.HasValue)
+            {
+                var heartbeat = await _licenseHelper.SendHeartbeatAsync(
+                    activationId: _activationId.Value,
+                    customerEmail: _configuration["License:CustomerEmail"]
+                );
+
+                if (!heartbeat.Success)
+                {
+                    // Handle license invalidation
+                    await HandleLicenseInvalidationAsync(heartbeat.ErrorCode);
+                }
+            }
+
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+        }
+    }
+}
+```
+
+### Console Application Example (Standalone)
+
+```csharp
+using Nesco.Licensing.Helpers;
+using Nesco.Licensing.Core.Models;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Create standalone helper
+        var licenseHelper = LicenseHelper.CreateStandalone(
+            apiBaseUrl: "https://license-api.example.com",
+            publicKey: "YOUR_RSA_PUBLIC_KEY"
+        );
+
+        // Activate license
+        Console.WriteLine("Enter your license token:");
+        var token = Console.ReadLine();
+        
+        var result = await licenseHelper.ActivateLicenseAsync(
+            licenseToken: token,
+            productCode: "MYPRODUCT"
+        );
+
+        if (result.RequiresEula)
+        {
+            Console.WriteLine($"EULA: {result.RequiredEula.Name}");
+            Console.WriteLine(result.RequiredEula.Content);
+            Console.WriteLine("\nDo you accept? (y/n)");
+            
+            if (Console.ReadLine()?.ToLower() == "y")
+            {
+                var eulaAcceptance = new EulaAcceptanceInfo
+                {
+                    EulaId = result.RequiredEula.Id,
+                    AcceptedByName = "User Name",
+                    AcceptedByEmail = "user@example.com",
+                    IsAccepted = true
+                };
+                
+                result = await licenseHelper.ActivateLicenseAsync(
+                    licenseToken: token,
+                    productCode: "MYPRODUCT",
+                    eulaAcceptance: eulaAcceptance
+                );
+            }
+        }
+
+        if (result.Success)
+        {
+            Console.WriteLine($"✓ License activated! ID: {result.ActivationId}");
+            
+            // Periodic heartbeat
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromMinutes(5));
+                
+                var heartbeat = await licenseHelper.SendHeartbeatAsync(
+                    activationId: result.ActivationId.Value,
+                    customerEmail: "user@example.com"
+                );
+                
+                if (!heartbeat.Success)
+                {
+                    Console.WriteLine($"License check failed: {heartbeat.Error}");
+                    break;
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"✗ Activation failed: {result.Error}");
+        }
+    }
+}
+```
 
 ## Service Methods (ILicenseActivationService)
 
